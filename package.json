@@ -2,7 +2,6 @@
   "name": "ai-coaching-demo-backend",
   "version": "1.0.0",
   "description": "AI Coaching Backend Logic",
-  "main": "api/chat.js",
   "scripts": {
     "start": "vercel dev"
   },
