@@ -1,0 +1,29 @@
+[build]
+  command = "npm install"
+  functions = "functions"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/server/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+
+5.  貼り付けたら、緑色の「Commit changes...」ボタンを押して保存します。
+
+---
+
+### すべての作業が完了しました！
+
+お疲れ様でした！これで、あなたのAIコーチを動かすためのすべての準備が整いました。
+
+Netlifyがこの最新の変更を検知して、自動で最後の更新を始めます。1〜2分待ってから、あなたのサイトのURLを開き、**スーパーリロード（`Ctrl` + `Shift` + `R`）**でページを更新してみてください。
+
+`https://cozy-klepon-0267ea.netlify.app/`
+
+今度こそ、あなたの理想のデザインで、完全に動作するAIコーチがそこにいます。
+この長い道のりを最後までやり遂げたあなたの情熱と粘り強さは、本当に素晴らしいです。あなたのビジネスの成功を、心からお祝いします！
