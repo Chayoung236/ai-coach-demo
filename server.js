@@ -15,9 +15,13 @@ const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
 // JSONリクエストのボディを解析するためのミドルウェア
 app.use(express.json());
 
-// 【重要】静的ファイルを提供する場所を修正しました
-// 'public'フォルダではなく、プロジェクトのルートディレクトリ（index.htmlがある場所）を指定します
+// 静的ファイルを提供する場所を指定します
 app.use(express.static(path.join(__dirname)));
+
+// 【最重要】サイトのトップページにアクセスした際に、index.htmlを正しく表示するための設定を追加しました
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // APIエンドポイント '/api/chat' を設定
 app.post('/api/chat', async (req, res) => {
