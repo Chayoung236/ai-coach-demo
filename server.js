@@ -11,7 +11,8 @@ const chatHandler = require('./api/chat');
 app.use(express.json());
 
 // 静的ファイル (index.html, CSSなど) を提供
-app.use(express.static(path.join(__dirname, '/')));
+// __dirname は現在のフォルダ
+app.use(express.static(path.join(__dirname)));
 
 // APIエンドポイントを /api/chat に設定
 app.post('/api/chat', (req, res) => {
