@@ -1,6 +1,6 @@
 {
   "name": "ai-coaching-demo-backend",
-  "version": "1.0.0",
+  "version": "",
   "description": "AI Coaching Backend Logic",
   "main": "api/chat.js",
   "scripts": {
@@ -13,3 +13,4 @@
     "vercel": "^34.1.8"
   }
 }
+
