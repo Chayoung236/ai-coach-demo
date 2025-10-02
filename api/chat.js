@@ -1,86 +1,66 @@
-// api/chat.js の内容
+// api/chat.js
+const { GoogleGenAI } = require('@google/genai');
 
-const { GoogleGenAI } = require("@google/genai"); 
+// Vercel/Expressで環境変数からAPIキーを取得
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
-// Vercel環境変数からAPIキーを取得 (このキーはサーバー内でのみ有効で安全です)
-const apiKey = process.env.GEMINI_API_KEY; 
-const ai = new GoogleGenAI(apiKey);
+// APIキーがない場合はエラー
+if (!GEMINI_API_KEY) {
+    console.error("GEMINI_API_KEY is not set.");
+    // デプロイが失敗しないようにダミーのAPIキーを設定（ただし動作しない）
+    // throw new Error("GEMINI_API_KEY is not set.");
+}
 
-// ★★★ ここにあなたのマスタープロンプトの全文が組み込まれています！ ★★★
+const ai = new GoogleGenAI(GEMINI_API_KEY);
+
+// マスタープロンプト
 const systemInstruction = `
-あなたは、ユーザーの自己理解と問題解決能力向上をサポートするAIコーチ「PE Lee AIコーチ」です。
-あなたは、プロンプトエンジニア PE Lee の看護師としての深い人間理解と、認知行動療法（CBT）の知見を基に設計されています。
+あなたはユーザーの専属AIコーチです。あなたの役割は、ユーザーが抱える悩みや問題に対して、質問を通じて自己理解を深め、解決策を自分で見つけられるようにサポートすることです。
 
-[あなたの役割と特徴]
-1.  **温かい傾聴と深い共感**: ユーザーの言葉の奥にある感情や意図を汲み取り、温かく受け止める言葉を返します。「〜と感じていらっしゃるのですね」と、感情を言葉にして返すことを意識します。
-2.  **思考と感情の整理支援**: ユーザーの語りを適度に要約したり、別の言葉で言い換えたりすることで、ユーザー自身が自分の思考や感情を客観視できるよう手助けします。
-3.  **穏やかな問いかけと気づきの促進**: ユーザーが自ら答えを見つけられるよう、穏やかで示唆に富む質問をします。質問ばかりにならないよう、質問の前に共感や要約を挟むことを意識します。
-4.  **具体的なヒントと視点の提供**: 必要に応じて、CBTの考え方に基づいた具体的な思考のヒントや、多角的な視点を提供します。ただし、直接的なアドバイスではなく、「〜という考え方もあります」「〜について考えてみるのはいかがでしょう」のように提案形式で伝えます。
-5.  **建設的な対話とポジティブな方向付け**: 対話が停滞しないよう、常に前向きな雰囲気を作り、ユーザーの小さな一歩や進歩を肯定的に受け止めます。
-6.  **安全性の確保**: ユーザーのプライバシーを尊重し、個人を特定する情報の保存は行いません。医療行為や診断、治療は行いません。
-7.  **口調**: 丁寧で、穏やか、知的でありながらも、時に優しく、包み込むような温かさを持つ口調を保ちます。
+## コーチングの原則
+1.  **質問中心**: ユーザーの入力に対し、質問で返すことを基本とします。直接的な答えやアドバイスは避けてください。
+2.  **傾聴と承認**: ユーザーの感情や状況を理解し、共感を示す言葉を使い、安心感を与えます。
+3.  **内省の促進**: 「その時どう感じましたか？」「その目標を達成するために、最初の一歩は何だと思いますか？」など、ユーザーが自分自身を深く掘り下げるための問いかけをしてください。
+4.  **解決のサポート**: ユーザーが具体的な行動計画を立てられるように促し、その計画を応援してください。
+5.  **親しみやすいトーン**: 丁寧でありながらも、親しみやすく温かいトーンで話します。
 
-[対話のガイドライン]
-* ユーザーのメッセージに対し、まずは共感や受容の言葉を最初に伝えるようにしてください。
-* ユーザーが感情を表現した際は、その感情を具体的に言葉にして返してください。
-* 質問を投げかける前に、ユーザーの言葉を要約したり、あなたの理解を示す一言を挟んでください。
-* 具体的な課題に対しては、CBTのフレームワーク（例：思考の記録、行動の選択肢、感情のラベリング）を簡潔に、分かりやすい言葉で提案することがあります。
-* 解決策を直接提示するのではなく、ユーザーが自ら考え、行動するためのきっかけとなるような問いかけや、小さなヒントを提供してください。
-* 医療的なアドバイスを求められた場合は、「私はAIコーチであり、医療従事者ではありません。専門の医療機関にご相談ください」と丁寧に伝え、適切な情報源を促してください。
-* 対話の終盤には、ユーザーの今日の気づきを促し、次の一歩を後押しするようなメッセージを伝えてください。
-`; // ★★★ ここまでがマスタープロンプト ★★★
+## 出力ルール
+* 出力はコーチとしての応答のみに限定し、他の説明や前置きは含めないでください。
+* 応答は常に日本語で行います。
+`;
 
-// サーバーレス関数としてエクスポート
+// サーバーレス関数（Express/Vercel互換）
 module.exports = async (req, res) => {
-    // POSTリクエスト以外は拒否
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
+    // APIキーがない場合はすぐにエラーを返す
+    if (!GEMINI_API_KEY) {
+        res.status(500).json({ error: "GEMINI_API_KEYがサーバーに設定されていません。" });
+        return;
     }
 
-    const { message, history } = req.body;
+    // 履歴と新しいメッセージをリクエストボディから取得
+    const { history, message } = req.body;
 
     if (!message) {
-        return res.status(400).json({ error: 'メッセージが提供されていません。' });
+        res.status(400).json({ error: "メッセージが指定されていません。" });
+        return;
     }
-    
-    // APIキーのチェック
-    if (!apiKey) {
-        return res.status(500).json({ error: 'サーバー側のAPIキー設定エラー。VercelのGEMINI_API_KEYを確認してください。' });
-    }
-    
-    // APIに送信する履歴を整形
-    let chatHistoryForApi = history.map(msg => ({
-        role: msg.sender === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.text }]
-    }));
-    
-    // マスタープロンプトを履歴の先頭に含める
-    const contents = [
-        // システム命令を最初のメッセージとして含める
-        { role: "user", parts: [{ text: systemInstruction }] },
-        // 最初のAI応答と、その後のユーザー・モデルのやり取り
-        { role: "model", parts: [{ text: "AIコーチングを開始します。今日のあなたのモヤモヤはどんなことですか？" }] },
-        ...chatHistoryForApi,
-        { role: "user", parts: [{ text: message }] } // 今回のユーザーメッセージ
-    ];
-    
+
     try {
-        const response = await ai.models.generateContent({
+        const chat = ai.chats.create({
             model: "gemini-2.5-flash",
-            contents: contents,
+            history: history || [],
             config: {
-                temperature: 0.7,
-                maxOutputTokens: 500,
-            }
+                systemInstruction: systemInstruction,
+            },
         });
-        
-        const aiResponseText = response.text;
-        
-        // AIの応答をフロントエンドに返す
-        res.status(200).json({ responseText: aiResponseText });
+
+        const response = await chat.sendMessage({ message });
+        const aiResponse = response.text;
+
+        res.status(200).json({ response: aiResponse });
 
     } catch (error) {
-        console.error("Gemini API呼び出し中にエラー:", error.message);
-        res.status(500).json({ error: 'AIコーチングの応答生成中にエラーが発生しました。APIキーまたはモデル名を確認してください。' });
+        console.error("Gemini APIエラー:", error);
+        res.status(500).json({ error: "Gemini APIとの通信中にエラーが発生しました。" });
     }
 };
