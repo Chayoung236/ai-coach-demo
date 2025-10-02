@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AIコーチングデモ</title>
     <style>
-        /* CSSは省略せずに、以前お渡しした元のコードをすべて貼り付けてください */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -149,4 +148,65 @@
                 <p>AIコーチングを開始します。最初のメッセージを入力してください。</p>
                 <p style="font-size: 0.8em; color: #666;">（例：最近、仕事でモヤモヤしています。）</p>
             </div>
-            <div id
+            <div id="loader" class="loader"></div>
+        </div>
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="メッセージを入力してください..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()" id="sendButton">送信</button>
+        </div>
+    </div>
+
+    <script>
+        const chatWindow = document.getElementById('chatWindow');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const loader = document.getElementById('loader');
+
+        let history = []; // 会話履歴を保持する配列
+
+        function appendMessage(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+            messageDiv.innerHTML = `<p>${text.replace(/\n/g, '<br>')}</p>`;
+            chatWindow.appendChild(messageDiv);
+            chatWindow.scrollTop = chatWindow.scrollHeight; // スクロールを一番下へ
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const userText = userInput.value.trim();
+            if (userText === '') return;
+
+            // 1. ユーザーメッセージの表示
+            appendMessage('user', userText);
+            userInput.value = '';
+            
+            // 2. 履歴の更新
+            history.push({ role: 'user', parts: [{ text: userText }] });
+
+            // 3. UIの無効化とローダー表示
+            sendButton.disabled = true;
+            userInput.disabled = true;
+            loader.style.display = 'block';
+
+            try {
+                // ローカルサーバーのURLを明示的に指定
+                // ★★★ 送信ボタンが機能しない原因を修正 ★★★
+                const response = await fetch('http://localhost:3000/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        history: history,
+                        message: userText
+                    })
+                });
+
+                if (!response.ok) {
+                    throw
