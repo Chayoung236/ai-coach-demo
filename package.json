@@ -1,14 +1,16 @@
 {
-  "name": "ai-coaching-demo-backend",
+  "name": "gemini-ai-coach-server",
   "version": "1.0.0",
-  "description": "AI Coaching Backend Logic",
+  "description": "AI Coaching Demo Server",
+  "main": "server.js",
   "scripts": {
-    "start": "vercel dev"
+    "start": "node server.js"
   },
   "dependencies": {
-    "@google/genai": "latest"
-  },
-  "devDependencies": {
-    "vercel": "^34.1.8"
+    "@google/generative-ai": "^0.1.3",
+    "express": "^4.18.2",
+    "path": "^0.12.7",
+    "serverless-http": "^3.2.0"
   }
 }
+
